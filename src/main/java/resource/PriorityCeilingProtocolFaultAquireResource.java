@@ -52,8 +52,7 @@ public final class PriorityCeilingProtocolFaultAquireResource extends PCP {
                     +" non ha acquisito le risorse " + resourcesId
                     + " prima di usarle");
             } else {
-                this.addAllBusyResources(resources);
-                parentTask.acquireResources(resources);
+                this.lockResources(chunk);
                 String resourcesId = resources.stream()
                     .map(Resource::toString)
                     .map(String::valueOf)
@@ -71,15 +70,7 @@ public final class PriorityCeilingProtocolFaultAquireResource extends PCP {
             return;
         Task parentTask = chunk.getParent();
         if (!this.faultChunks.contains(chunk)) {
-            for (Resource resource : resources) {
-                resource.getMaxDinamicPriorityBlockedtask().ifPresent(
-                    t -> {
-                        this.getScheduler().unblockTask(t);
-                        this.getScheduler().addReadyTask(t);
-                        resource.removeBlockedTask(t);
-                        parentTask.releaseResource(resource);
-                    });
-            }
+            this.unlockResources(chunk);
         }
         parentTask.getResourcesAcquiredStream()
             .flatMap(res -> res.getBlockedTasks().stream())

@@ -1,3 +1,4 @@
 trace.log
 .DS_Store
 target/
+doc/*

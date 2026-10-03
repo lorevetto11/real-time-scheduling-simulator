@@ -25,8 +25,7 @@ public final class PriorityCeilingProtocol extends PCP {
             parentTask.getNominalPriority(),
             MaxDinamicPriorityBlockedtask));
         if (!resources.isEmpty()) {
-            this.addAllBusyResources(resources);
-            parentTask.acquireResources(resources);
+            this.lockResources(chunk);
             String resourcesId = resources.stream()
                 .map(Resource::toString)
                 .map(String::valueOf)
@@ -41,15 +40,7 @@ public final class PriorityCeilingProtocol extends PCP {
         if (resources.isEmpty())
             return;
         Task parentTask = chunk.getParent();
-        for (Resource resource : resources) {
-            resource.getMaxDinamicPriorityBlockedtask().ifPresent(
-                t -> {
-                    this.getScheduler().unblockTask(t);
-                    this.getScheduler().addReadyTask(t);
-                    resource.removeBlockedTask(t);
-                    parentTask.releaseResource(resource);
-                });
-        }
+        this.unlockResources(chunk);
         parentTask.getResourcesAcquiredStream()
             .flatMap(res -> res.getBlockedTasks().stream())
             .mapToInt(Task::getNominalPriority)

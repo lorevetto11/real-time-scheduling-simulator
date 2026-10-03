@@ -53,8 +53,7 @@ public final class PriorityCeilingProtocolFaultSetPriority extends PCP {
         parentTask.setDinamicPriority(faultPriority);
         MyLogger.wrn("PCP ha inalzato la priorità del task in modo errato. Alla priorità corretta è stato aggiunto " + deltaValue);
         if (!resources.isEmpty()) {
-            this.addAllBusyResources(resources);
-            parentTask.acquireResources(resources);
+            this.lockResources(chunk);
             String resourcesId = resources.stream()
                 .map(Resource::toString)
                 .map(String::valueOf)
@@ -69,15 +68,7 @@ public final class PriorityCeilingProtocolFaultSetPriority extends PCP {
         if (resources.isEmpty())
             return;
         Task parentTask = chunk.getParent();
-        for (Resource resource : resources) {
-            resource.getMaxDinamicPriorityBlockedtask().ifPresent(
-                t -> {
-                    this.getScheduler().unblockTask(t);
-                    this.getScheduler().addReadyTask(t);
-                    resource.removeBlockedTask(t);
-                    parentTask.releaseResource(resource);
-                });
-        }
+        this.unlockResources(chunk);
         parentTask.getResourcesAcquiredStream()
             .flatMap(res -> res.getBlockedTasks().stream())
             .mapToInt(Task::getNominalPriority)
