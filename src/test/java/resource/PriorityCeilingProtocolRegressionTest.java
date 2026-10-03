@@ -65,4 +65,31 @@ public class PriorityCeilingProtocolRegressionTest {
             .doesNotThrowAnyException();
     }
 
+    @Test
+    public void ownerInheritsPriorityWhenTaskBlocksOK() {
+        Resource res1 = new Resource();
+        Task task1 = new Task(
+            10,
+            10,
+            List.of(
+                new Chunk(1, new ConstantSampler(new BigDecimal(1))),
+                new Chunk(2, new ConstantSampler(new BigDecimal(1)), List.of(res1))));
+        Task task2 = new Task(
+            20,
+            20,
+            List.of(
+                new Chunk(1, new ConstantSampler(new BigDecimal(8)))));
+        Task task3 = new Task(
+            40,
+            40,
+            List.of(
+                new Chunk(1, new ConstantSampler(new BigDecimal(5))),
+                new Chunk(2, new ConstantSampler(new BigDecimal(10)), List.of(res1))));
+        TaskSet taskSet = new TaskSet(Set.of(task1, task2, task3));
+        ResourcesProtocol protocol = new PriorityCeilingProtocol();
+        RMScheduler scheduler = new RMScheduler(taskSet, protocol, 40);
+        assertThatCode(() -> scheduler.schedule())
+            .doesNotThrowAnyException();
+    }
+
 }

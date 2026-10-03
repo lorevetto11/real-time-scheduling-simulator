@@ -52,12 +52,13 @@ public final class PriorityCeilingProtocolFaultAquireResource extends PCP {
                     +" non ha acquisito le risorse " + resourcesId
                     + " prima di usarle");
             } else {
-                this.lockResources(chunk);
+                boolean newLock = this.lockResources(chunk);
                 String resourcesId = resources.stream()
                     .map(Resource::toString)
                     .map(String::valueOf)
                     .collect(Collectors.joining(", ", "[", "]"));
-                MyLogger.log("<" + Utils.printCurrentTime() + ", " + chunk.toString() + " lock " + resourcesId + ">");
+                if (newLock)
+                    MyLogger.log("<" + Utils.printCurrentTime() + ", " + chunk.toString() + " lock " + resourcesId + ">");
                 this.faultChunks.add(chunk);
             }
         }

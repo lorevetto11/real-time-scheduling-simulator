@@ -53,12 +53,13 @@ public final class PriorityCeilingProtocolFaultSetPriority extends PCP {
         parentTask.setDinamicPriority(faultPriority);
         MyLogger.wrn("PCP ha inalzato la priorità del task in modo errato. Alla priorità corretta è stato aggiunto " + deltaValue);
         if (!resources.isEmpty()) {
-            this.lockResources(chunk);
+            boolean newLock = this.lockResources(chunk);
             String resourcesId = resources.stream()
                 .map(Resource::toString)
                 .map(String::valueOf)
                 .collect(Collectors.joining(", ", "[", "]"));
-            MyLogger.log("<" + Utils.printCurrentTime() + ", " + chunk.toString() + " lock " + resourcesId + ">");
+            if (newLock)
+                MyLogger.log("<" + Utils.printCurrentTime() + ", " + chunk.toString() + " lock " + resourcesId + ">");
         }
     }
 

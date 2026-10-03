@@ -60,6 +60,13 @@ public abstract class Scheduler {
         return this.taskSet;
     }
 
+    public void updateDinamicPriority(Task task, int dinamicPriority) {
+        boolean isReady = this.readyTasks.remove(task);
+        task.setDinamicPriority(dinamicPriority);
+        if (isReady)
+            this.readyTasks.add(task);
+    }
+
     protected TreeSet<Task> getReadyTasks() {
         return this.readyTasks;
     }

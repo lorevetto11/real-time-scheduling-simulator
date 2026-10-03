@@ -52,6 +52,7 @@ public abstract class PCP extends ResourcesProtocol{
         if (parentTask.getNominalPriority() >= maxCeiling) {
             Resource resource = blockingResource.get();
             resource.addBlockedTask(parentTask);
+            this.inheritPriority(this.busyResources.get(resource), parentTask);
             getScheduler().blockTask(parentTask);
             parentTask.addChunkToExecute(chunk);
             MyLogger.log("<" + Utils.printCurrentTime() + ", " + chunk.toString() + " blockedOn [" + resource.toString() + "]>");
@@ -64,14 +65,19 @@ public abstract class PCP extends ResourcesProtocol{
      * Marks the resources of the chunk as owned by its parent task.
      *
      * @param chunk the chunk that enters its critical section
+     * @return true if at least one resource has been acquired now, false if the chunk already owned all of them
      */
-    protected void lockResources(Chunk chunk) {
+    protected boolean lockResources(Chunk chunk) {
         Task parentTask = chunk.getParent();
+        boolean newLock = false;
         for (Resource resource : chunk.getResources()) {
-            if (!parentTask.hasAquiredThatResource(resource))
+            if (!parentTask.hasAquiredThatResource(resource)) {
                 parentTask.acquireResources(List.of(resource));
+                newLock = true;
+            }
             this.busyResources.put(resource, parentTask);
         }
+        return newLock;
     }
 
     /**
@@ -91,6 +97,17 @@ public abstract class PCP extends ResourcesProtocol{
                 this.getScheduler().addReadyTask(blockedTask);
             }
         }
+    }
+
+    /**
+     * The task that owns the blocking resource inherits the priority of the blocked task, if higher.
+     *
+     * @param owner       the task that owns the resource
+     * @param blockedTask the task blocked on the resource
+     */
+    private void inheritPriority(Task owner, Task blockedTask) {
+        if (blockedTask.getDinamicPriority() < owner.getDinamicPriority())
+            getScheduler().updateDinamicPriority(owner, blockedTask.getDinamicPriority());
     }
 
 }
